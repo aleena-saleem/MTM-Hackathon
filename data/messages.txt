@@ -1,0 +1,8 @@
+# Place your event message pack here.
+# Each message should start with a header on its own line, for example:
+#
+#   [Message 1 | From: Sender name | Date: DD Mon]
+#   Message body text...
+#
+# The agent splits on these headers automatically.
+# Do not add invented facts — paste real messages exactly as received.
