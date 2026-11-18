@@ -191,13 +191,19 @@ class GroqAgent:
 
 def create_agent(**kwargs):
     """
-    Return a GroqAgent or OllamaAgent depending on config.LLM_BACKEND.
+    Return a GroqAgent or OllamaAgent depending on the active backend.
+
+    Re-evaluates the backend at call time (via _config._detect_backend) so
+    that late-loaded .env values (e.g. from load_dotenv called in app.py)
+    are always respected, even if config was first imported before .env loaded.
 
     Keyword args are forwarded to the chosen agent constructor.
     For GroqAgent: model=  (optional)
     For OllamaAgent: base_url=, model=  (optional)
     """
-    if _config.LLM_BACKEND == "groq":
+    # Re-read backend dynamically to avoid stale module-cache issues.
+    backend = _config._detect_backend()
+    if backend == "groq":
         return GroqAgent(model=kwargs.get("model"))
     # Fallback to Ollama
     return OllamaAgent(

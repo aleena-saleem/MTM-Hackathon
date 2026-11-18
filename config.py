@@ -41,8 +41,10 @@ Or add them to a .env file in the project root (never commit that file).
 import os
 from dotenv import load_dotenv
 
-# Load a .env file if present. Safe to call even if the file does not exist.
-load_dotenv()
+# Load a .env file if present, letting it override any existing system env vars.
+# This ensures the project's own .env always takes precedence over stale
+# system-level variables (e.g. a placeholder OPENAI_API_KEY set elsewhere).
+load_dotenv(override=True)
 
 # ---------------------------------------------------------------------------
 # Groq (cloud — requires GROQ_API_KEY)
