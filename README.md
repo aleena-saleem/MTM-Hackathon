@@ -1,77 +1,268 @@
-# Mind to Machine — Hackathon Planning Agent
+# Mind to Machine (MTM)
+### Multi-Agent AI System for Intelligent Event Planning
 
-A message-driven event planning system for the Mind to Machine hackathon brief. It reads a plain-text pack, uses a local LLM to extract claims, applies deterministic conflict handling, calculates a plan, validates constraints, and exposes the plan and full model trace in Streamlit.
+Mind to Machine (MTM) is an AI-powered event planning system that transforms unstructured stakeholder messages into a structured, constraint-aware event plan.
 
-## Architecture
+Developed for a real-world hackathon planning challenge, MTM uses a multi-agent processing pipeline to extract information, reconcile conflicting claims, generate an event plan and validate operational constraints.
 
-1. **Message reader / extractor (`agent.py`)** — sends every message through one identical Ollama chat call. No per-message flags or manual hints.
-2. **Claim store (`planner.py`)** — stores normalized facts with date, sender, confidence and provenance. Newer conflicting claims replace older ones; older conflicting claims are rejected.
-3. **Deterministic planner (`planner.py`)** — arithmetic, capacity, budget and judge calculations are Python, not extra LLM calls.
-4. **Validation** — checks venue capacity, budget, food quantity, judging capacity, schedule and area coverage.
-5. **UI (`app.py`)** — displays plan, checks, rejected claims and per-call trace; exports JSON.
+The system also supports incremental updates, allowing new information to be processed without unnecessarily rebuilding the entire plan.
 
-## Run on Windows
+---
 
-### 1. Install Ollama and pull a model
-Install Ollama from https://ollama.com/download, open PowerShell, then run:
+## 1. Project Overview
 
-```powershell
-ollama pull qwen2.5:3b
-ollama run qwen2.5:3b
+The challenge is to plan a four-hour physical hackathon in Islamabad for:
+
+- **150 students**
+- **50 teams**
+- **4 hours of event duration**
+
+The system manages five major planning areas:
+
+| Planning Area | Responsibilities |
+|---|---|
+| Venue | Capacity, availability, cost and standby generator |
+| Schedule | Activities, timings and event duration |
+| Food & Catering | Food quantities, pricing and delivery |
+| Judging | Judge availability, allocation and honorariums |
+| Budget | Approved limit, committed expenses and remaining funds |
+
+Stakeholder messages may contain new information, duplicate submissions or conflicting claims. MTM processes these messages and maintains a consolidated event plan that reflects the latest accepted information.
+
+## 2. Key Features
+
+### Multi-Agent Message Processing
+- Processes unstructured stakeholder messages using an LLM-powered agent pipeline.
+- Extracts relevant structured claims.
+- Organizes information according to planning areas.
+- Maintains consolidated application state.
+
+### Claim Reconciliation
+- Identifies conflicting claims.
+- Evaluates incoming information against existing claims.
+- Records rejected claims and their reasons.
+- Maintains traceability to original messages.
+
+### Constraint-Aware Planning
+- Generates a structured event plan.
+- Evaluates venue feasibility and resource requirements.
+- Checks judging capacity and scheduling constraints.
+- Validates the overall event budget.
+- Reports failed constraints.
+
+### Incremental Updates
+- Processes new stakeholder messages after initial planning.
+- Detects duplicate messages using SHA-256 hashing.
+- Identifies affected planning areas.
+- Recalculates relevant planning components.
+- Preserves the last valid plan when an update introduces constraint failures.
+
+### Groq API Integration
+- Uses Groq as the LLM provider.
+- Connects to the configured language model.
+- Captures actual provider-reported token usage.
+- Records individual model calls and execution duration.
+
+### Execution Monitoring
+- Tracks successful and failed model calls.
+- Displays input messages and LLM responses.
+- Records accepted and rejected claims.
+- Monitors prompt, completion and total tokens.
+- Maintains cumulative execution statistics.
+
+### Persistent State
+- Saves claims, messages, plans and execution traces.
+- Maintains application state across sessions.
+- Supports JSON downloads for the final plan and complete state.
+
+---
+
+## 3. System Architecture
+
+MTM follows a modular architecture separating message processing, claim reconciliation, plan generation and frontend presentation.
+
+```mermaid
+flowchart TD
+    A[Stakeholder Messages] --> B[Multi-Agent Processing]
+    B --> C[Claim Extraction]
+    C --> D[Claim Reconciliation]
+    D --> E[Accepted Claims]
+    D --> F[Rejected Claims]
+    E --> G[Consolidated State]
+    G --> H[Plan Generation]
+    H --> I[Constraint Validation]
+    I --> J[Final Event Plan]
+    F --> K[Rejection Log]
+    J --> L[Streamlit Dashboard]
+    K --> L
 ```
 
-Wait for the model prompt, then type `/bye`. Keep Ollama running in the background.
+### Incremental Update Workflow
 
-### 2. Set up the project
+```mermaid
+flowchart TD
+    A[New Message] --> B[Duplicate Detection]
+    B --> C[Agent Processing]
+    C --> D[Claim Reconciliation]
+    D --> E[Identify Affected Areas]
+    E --> F[Incremental Replanning]
+    F --> G[Constraint Validation]
+    G --> H{Plan Valid?}
+    H -->|Yes| I[Update Current Plan]
+    H -->|No| J[Preserve Last Valid Plan]
+    I --> K[Save Persistent State]
+    J --> K
+```
 
-```powershell
-cd mind_to_machine
-py -m venv .venv
-.venv\Scripts\activate
-py -m pip install --upgrade pip
+---
+
+## 4. Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Core application development |
+| Streamlit | Interactive web interface |
+| Groq API | Large language model integration |
+| Custom Agent Pipeline | Message processing and claim reconciliation |
+| JSON | Persistent application state |
+| SHA-256 | Duplicate message detection |
+| Git & GitHub | Version control and collaboration |
+
+---
+
+## 5. Project Structure
+
+```text
+Mind-to-Machine/
+│
+├── app.py                  # Streamlit application
+├── agent.py                # Agent orchestration
+├── config.py               # LLM configuration
+│
+├── core/
+│   ├── parser.py           # Response parsing
+│   ├── planner.py          # Event plan generation
+│   ├── updater.py          # Incremental updates
+│   └── schema.py           # State schema
+│
+├── data/
+│   └── messages.txt        # Initial stakeholder messages
+│
+├── output/
+│   └── state.json          # Persistent application state
+│
+├── requirements.txt        # Python dependencies
+├── .env                    # Environment configuration
+├── .gitignore
+└── README.md
+```
+
+---
+
+## 6. Installation and Setup
+
+### Prerequisites
+
+Before running the application, ensure you have:
+
+- Python 3.10 or later, compatible with project dependencies.
+- pip package manager.
+- Internet connection.
+- Groq API key.
+
+### Step 1: Clone the Repository
+
+```bash
+git clone YOUR_GITHUB_REPOSITORY_URL
+cd Mind-to-Machine
+```
+
+Replace the repository URL with your actual GitHub repository URL.
+
+### Step 2: Create a Virtual Environment
+
+For Windows:
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+For Linux/macOS:
+
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### Step 3: Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 3. Launch
+### Step 4: Configure Groq API
 
-```powershell
+1. Visit https://console.groq.com/
+2. Create an account or sign in.
+3. Generate an API key.
+4. Create a `.env` file in the project root.
+5. Add your API key using the environment variable name expected by `config.py`.
+
+Example:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+```
+
+Never upload your actual API key to GitHub.
+
+### Step 5: Verify Configuration
+
+Check `config.py` to ensure:
+- The LLM backend is configured for Groq.
+- The environment variable is loaded correctly.
+- The selected model is supported by your Groq account.
+
+### Step 6: Run the Application
+
+Start the Streamlit application:
+
+```bash
 streamlit run app.py
 ```
 
-The browser opens the dashboard. Click **Run full pack**. Add messages in the right-hand panel and click **Apply update**.
+Open the local application in your browser:
 
-## One-command CLI run
+http://localhost:8501
 
-```powershell
-python main.py sample_messages.txt
-```
+---
 
-The CLI saves `final_plan.json` and `full_trace.json`.
+## 7. Application Modules
 
-## Important model/trace honesty
+The application provides four main sections.
 
-The trace records the model identifier and token counters returned by Ollama (`prompt_eval_count`, `eval_count`). If a call fails, it is marked as failed with zero reported token counts; the program does not invent usage numbers. Model timing depends on laptop performance. Run a warm-up and full-pack timing test before submission.
+### 01. Event Overview
 
-## Add your own message pack
+Provides a consolidated view of the generated event plan.
 
-Use the exact message text in a `.txt` file. Separate messages with headers like:
+Displays:
+- Total attendees and teams.
+- Event duration.
+- Venue allocation.
+- Food and catering details.
+- Judging arrangements.
+- Event schedule.
+- Budget breakdown.
+- Constraint validation results.
 
-```text
-[Message 1 | From: Sender | Date: 18 Nov]
-Message body...
-```
+### 02. Live Updates
 
-The app's full-pack path and update path use the same message ingestion method. No message facts should be added to Python source code.
+Allows users to submit additional stakeholder messages.
 
-## Before submission
-
-- Test with the sample pack.
-- Test one genuine update (e.g. printing cost revised).
-- Test an invalid food quantity (less food than attendees) and confirm it is rejected.
-- Confirm every run is within the 2-minute full-run / 1-minute update limit.
-- Inspect `git status`, commit, push, and submit the exact commit hash.
-- Do not modify code after the stated code-freeze time.
-
-## Known limitations to discuss honestly
-
-This is a hackathon prototype. LLM extraction can still make mistakes on novel wording. The deterministic validator protects explicit invariants represented in its rules, but cannot guarantee every possible unseen constraint. Before final judging, add and test domain-specific invariants that the team can explain. Also ensure the judge's exact text-pack delimiter format is supported.
+The system:
+1. Checks for duplicate messages.
+2. Processes new information through the agent pipeline.
+3. Extracts and reconciles claims.
+4. Identifies affected planning areas.
+5.
